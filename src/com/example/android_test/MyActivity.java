@@ -93,7 +93,9 @@ public class MyActivity extends Activity {
                 ResponseHandler responseHandler = new BasicResponseHandler();
 
                 String response = (String) httpclient.execute(httppost, responseHandler);
-                return un + "||" + response;
+                JSONObject jo = new JSONObject(response);
+                jo.put("name", un);
+                return jo.toString();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -106,14 +108,11 @@ public class MyActivity extends Activity {
         protected void onPostExecute(String result) {
             try{
                 clearText();
-
-                String name = result.split("\\|\\|")[0];
-                String jresult = result.split("\\|\\|")[1];
-                JSONObject jo = new JSONObject(jresult);
+                JSONObject jo = new JSONObject(result);
                 if (jo.getInt("errCode") == 1) {
                     message.setText("Please enter your credentials below");
                     Intent intent = new Intent(getApplicationContext(), DisplayUserInfo.class);
-                    intent.putExtra(UNAME, name);
+                    intent.putExtra(UNAME, jo.getString("name"));
                     intent.putExtra(COUNT, jo.getInt("count"));
 
                     startActivity(intent);
