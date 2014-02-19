@@ -20,10 +20,10 @@ import org.json.*;
 
 public class MyActivity extends Activity {
 
-    public final static String EXTRA_MESSAGE = "com.example.android_test.MESSAGE";
+    public final static String UNAME = "com.example.android_test.UNAME";
+    public final static String COUNT = "com.example.android_test.COUNT";
 
     TextView message;
-    String hi;
 
     /**
      * Called when the activity is first created.
@@ -36,7 +36,6 @@ public class MyActivity extends Activity {
     }
 
 
-    /** Called when the user clicks the Send button */
     public void login(View view) {
         ConnectivityManager connMgr = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -63,6 +62,11 @@ public class MyActivity extends Activity {
 
     }
 
+    public void clearText() {
+        ((EditText) findViewById(R.id.username)).setText("");
+        ((EditText) findViewById(R.id.password)).setText("");
+    }
+
 
 
 
@@ -70,48 +74,64 @@ public class MyActivity extends Activity {
         @Override
         protected String doInBackground(String... urls) {
 
-            // params comes from the execute() call: params[0] is the url.
             try {
                 EditText et_un = (EditText) findViewById(R.id.username);
                 EditText et_pw = (EditText) findViewById(R.id.password);
                 String un = et_un.getText().toString();
                 String pw = et_pw.getText().toString();
 
-                //instantiates httpclient to make request
                 DefaultHttpClient httpclient = new DefaultHttpClient();
+                HttpPost httppost = new HttpPost(urls[0]);
 
-                //url with the post data
-                HttpPost httpost = new HttpPost(urls[0]);
-
-                //convert parameters into JSON object
                 JSONObject holder = new JSONObject();
                 holder.put("password", pw);
                 holder.put("user", un);
-                //passes the results to a string builder/entity
                 StringEntity se = new StringEntity(holder.toString());
-
-                //sets the post request as the resulting string
-                httpost.setEntity(se);
-                //sets a request header so the page receving the request
-                //will know what to do with it
-                httpost.setHeader("Accept", "application/json");
-                httpost.setHeader("Content-type", "application/json");
-
-                //Handles what is returned from the page
+                httppost.setEntity(se);
+                httppost.setHeader("Accept", "application/json");
+                httppost.setHeader("Content-type", "application/json");
                 ResponseHandler responseHandler = new BasicResponseHandler();
 
-                String response = (String) httpclient.execute(httpost, responseHandler);
-                Log.e("--------==========", response);
-                return response;
+                String response = (String) httpclient.execute(httppost, responseHandler);
+                return un + "||" + response;
+
             } catch (Exception e) {
                 e.printStackTrace();
                 return "Unable to retrieve web page. URL may be invalid.";
             }
         }
-        // onPostExecute displays the results of the AsyncTask.
+
+
         @Override
         protected void onPostExecute(String result) {
-            message.setText(result);
+            try{
+                clearText();
+
+                String name = result.split("\\|\\|")[0];
+                String jresult = result.split("\\|\\|")[1];
+                JSONObject jo = new JSONObject(jresult);
+                if (jo.getInt("errCode") == 1) {
+                    message.setText("Please enter your credentials below");
+                    Intent intent = new Intent(getApplicationContext(), DisplayUserInfo.class);
+                    intent.putExtra(UNAME, name);
+                    intent.putExtra(COUNT, jo.getInt("count"));
+
+                    startActivity(intent);
+                } else if (jo.getInt("errCode") == -1) {
+                    message.setText("Invalid username and password combination. Please try again.");
+                } else if (jo.getInt("errCode") == -2) {
+                    message.setText("This user name already exists. Please try again.");
+                } else if (jo.getInt("errCode") == -3) {
+                    message.setText("The user name should not be empty and should be at most 128 characters long. Please try again.");
+                } else if (jo.getInt("errCode") == -4) {
+                    message.setText("The password should be at most 128 characters long. Please try again.");
+                } else {
+                    message.setText("unexpected errCode");
+                }
+
+            } catch (Exception e) {
+                message.setText("unexpected error");
+            }
         }
     }
 }

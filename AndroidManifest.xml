@@ -16,13 +16,6 @@
         </activity>
 
 
-        <activity
-                android:name="com.example.android_test.DisplayMessageActivity"
-                android:label="@string/title_activity_display_message"
-                android:parentActivityName="com.example.android_test.MainActivity" >
-            <meta-data
-                    android:name="android.support.PARENT_ACTIVITY"
-                    android:value="com.example.android_test.MainActivity" />
-        </activity>
+        <activity android:name=".DisplayUserInfo"/>
     </application>
 </manifest>
